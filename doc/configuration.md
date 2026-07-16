@@ -44,8 +44,8 @@ ai:
 
     agent:
         content_ai:
-            platform: 'ai.platform.openai'
-            model: 'gpt-4o-mini'
+            platform: 'ai.platform.mistral'
+            model: 'mistral-small-latest'
             prompt: |
                 You are a content assistant integrated into the Sulu CMS admin.
                 You help editors write and structure page and article content.
@@ -62,7 +62,7 @@ The bundle exposes a minimal configuration under the `itech_world_sulu_content_a
 ```yaml
 # config/packages/itech_world_sulu_content_ai.yaml
 itech_world_sulu_content_ai:
-    default_provider: openai        # openai | anthropic | mistral
+    default_provider: mistral       # openai | anthropic | mistral
     model: 'mistral-small-latest'   # model for content/SEO/translation (needs json_schema support)
     vision_model: 'pixtral-12b-latest' # vision-capable model for image metadata (needs image input)
 ```
