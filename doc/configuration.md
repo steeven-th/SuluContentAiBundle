@@ -110,3 +110,20 @@ else is required.
 
 > The same approach lets you override any other admin CSS custom property exposed
 > by this or other bundles.
+
+## 6. Permissions
+
+The bundle registers an **"AI Assistant"** security context
+(`sulu.iw_sulu_content_ai.assistant`) with `view` and `edit` permissions. Grant it
+per role under **Settings → User roles**.
+
+The AI actions on pages, articles and media are gated by this context:
+
+- **`edit`** — required to run the assistant (chat), generate SEO tags, generate or
+  translate media metadata, and use the per-field writing assistant. Without it the
+  toolbar/field buttons are hidden **and** the API endpoints return `403`.
+- **`view`** — required for the read-only endpoints (conversation history, expert/prompt
+  option lists).
+
+Both the admin UI (button visibility) and the back-office controllers enforce the
+check, so removing the permission fully disables the feature for that role.

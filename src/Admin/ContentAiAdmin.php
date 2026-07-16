@@ -9,6 +9,7 @@ use Sulu\Bundle\AdminBundle\Admin\View\ToolbarAction;
 use Sulu\Bundle\AdminBundle\Admin\View\ViewBuilderInterface;
 use Sulu\Bundle\AdminBundle\Admin\View\ViewCollection;
 use Sulu\Component\Security\Authorization\PermissionTypes;
+use Sulu\Component\Security\Authorization\SecurityCheckerInterface;
 
 /**
  * Admin integration for the AI assistant.
@@ -47,6 +48,11 @@ final class ContentAiAdmin extends Admin
 
     public const SECURITY_CONTEXT = 'sulu.iw_sulu_content_ai.assistant';
 
+    public function __construct(
+        private readonly SecurityCheckerInterface $securityChecker,
+    ) {
+    }
+
     /**
      * Run after the core Sulu admins (priority 0) so the page/article/media views
      * already exist in the collection when we append our toolbar actions.
@@ -65,6 +71,12 @@ final class ContentAiAdmin extends Admin
      */
     public function configureViews(ViewCollection $viewCollection): void
     {
+        // Hide every AI toolbar action from users lacking the assistant EDIT permission.
+        // The backend controllers enforce the same check, so this is purely cosmetic.
+        if (!$this->securityChecker->hasPermission(self::SECURITY_CONTEXT, PermissionTypes::EDIT)) {
+            return;
+        }
+
         foreach ($viewCollection->all() as $viewBuilder) {
             $name = $viewBuilder->getName();
 
