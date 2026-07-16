@@ -166,7 +166,7 @@ SuluContentAiBundle/
 │   ├── Schema/             # Template/block introspection → JSON Schema
 │   └── Security/           # API key encryption
 ├── public/js/              # Admin React components (toolbar actions, field types)
-├── translations/           # Admin translations (fr, en)
+├── translations/           # Admin translations (en, fr, de)
 └── doc/                    # Documentation
 ```
 
@@ -174,6 +174,7 @@ SuluContentAiBundle/
 
 * English
 * French
+* German
 
 ## 🐛 Bug and Idea
 
