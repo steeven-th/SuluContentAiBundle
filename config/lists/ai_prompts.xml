@@ -1,0 +1,28 @@
+<?xml version="1.0" ?>
+<list xmlns="http://schemas.sulu.io/list-builder/list">
+    <key>iw_ai_prompts</key>
+
+    <properties>
+        <property name="id" visibility="no" searchability="no" translation="sulu_admin.id">
+            <field-name>id</field-name>
+            <entity-name>ItechWorld\SuluContentAiBundle\Entity\AiPrompt</entity-name>
+        </property>
+
+        <property name="name" visibility="always" searchability="yes" translation="sulu_admin.name">
+            <field-name>name</field-name>
+            <entity-name>ItechWorld\SuluContentAiBundle\Entity\AiPrompt</entity-name>
+        </property>
+
+        <property name="enabled" visibility="yes" translation="iw_sulu_content_ai.enabled">
+            <field-name>enabled</field-name>
+            <entity-name>ItechWorld\SuluContentAiBundle\Entity\AiPrompt</entity-name>
+            <transformer type="bool"/>
+        </property>
+
+        <property name="changed" visibility="yes" translation="sulu_admin.changed">
+            <field-name>changed</field-name>
+            <entity-name>ItechWorld\SuluContentAiBundle\Entity\AiPrompt</entity-name>
+            <transformer type="datetime"/>
+        </property>
+    </properties>
+</list>

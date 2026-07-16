@@ -1,0 +1,107 @@
+# AI experts CRUD
+iw_sulu_content_ai.get_experts:
+    path: /iw-ai-experts.{_format}
+    controller: ItechWorld\SuluContentAiBundle\Controller\Admin\AiExpertController::cgetAction
+    methods: GET
+    defaults: { _format: json }
+    requirements: { _format: json }
+
+iw_sulu_content_ai.get_expert:
+    path: /iw-ai-experts/{id}.{_format}
+    controller: ItechWorld\SuluContentAiBundle\Controller\Admin\AiExpertController::getAction
+    methods: GET
+    defaults: { _format: json }
+    requirements: { _format: json }
+
+iw_sulu_content_ai.post_expert:
+    path: /iw-ai-experts.{_format}
+    controller: ItechWorld\SuluContentAiBundle\Controller\Admin\AiExpertController::postAction
+    methods: POST
+    defaults: { _format: json }
+    requirements: { _format: json }
+
+iw_sulu_content_ai.put_expert:
+    path: /iw-ai-experts/{id}.{_format}
+    controller: ItechWorld\SuluContentAiBundle\Controller\Admin\AiExpertController::putAction
+    methods: PUT
+    defaults: { _format: json }
+    requirements: { _format: json }
+
+iw_sulu_content_ai.delete_expert:
+    path: /iw-ai-experts/{id}.{_format}
+    controller: ItechWorld\SuluContentAiBundle\Controller\Admin\AiExpertController::deleteAction
+    methods: DELETE
+    defaults: { _format: json }
+    requirements: { _format: json }
+
+# AI prompts CRUD
+iw_sulu_content_ai.get_prompts:
+    path: /iw-ai-prompts.{_format}
+    controller: ItechWorld\SuluContentAiBundle\Controller\Admin\AiPromptController::cgetAction
+    methods: GET
+    defaults: { _format: json }
+    requirements: { _format: json }
+
+iw_sulu_content_ai.get_prompt:
+    path: /iw-ai-prompts/{id}.{_format}
+    controller: ItechWorld\SuluContentAiBundle\Controller\Admin\AiPromptController::getAction
+    methods: GET
+    defaults: { _format: json }
+    requirements: { _format: json }
+
+iw_sulu_content_ai.post_prompt:
+    path: /iw-ai-prompts.{_format}
+    controller: ItechWorld\SuluContentAiBundle\Controller\Admin\AiPromptController::postAction
+    methods: POST
+    defaults: { _format: json }
+    requirements: { _format: json }
+
+iw_sulu_content_ai.put_prompt:
+    path: /iw-ai-prompts/{id}.{_format}
+    controller: ItechWorld\SuluContentAiBundle\Controller\Admin\AiPromptController::putAction
+    methods: PUT
+    defaults: { _format: json }
+    requirements: { _format: json }
+
+iw_sulu_content_ai.delete_prompt:
+    path: /iw-ai-prompts/{id}.{_format}
+    controller: ItechWorld\SuluContentAiBundle\Controller\Admin\AiPromptController::deleteAction
+    methods: DELETE
+    defaults: { _format: json }
+    requirements: { _format: json }
+
+# AI provider configs CRUD
+iw_sulu_content_ai.get_providers:
+    path: /iw-ai-providers.{_format}
+    controller: ItechWorld\SuluContentAiBundle\Controller\Admin\AiProviderConfigController::cgetAction
+    methods: GET
+    defaults: { _format: json }
+    requirements: { _format: json }
+
+iw_sulu_content_ai.get_provider:
+    path: /iw-ai-providers/{id}.{_format}
+    controller: ItechWorld\SuluContentAiBundle\Controller\Admin\AiProviderConfigController::getAction
+    methods: GET
+    defaults: { _format: json }
+    requirements: { _format: json }
+
+iw_sulu_content_ai.post_provider:
+    path: /iw-ai-providers.{_format}
+    controller: ItechWorld\SuluContentAiBundle\Controller\Admin\AiProviderConfigController::postAction
+    methods: POST
+    defaults: { _format: json }
+    requirements: { _format: json }
+
+iw_sulu_content_ai.put_provider:
+    path: /iw-ai-providers/{id}.{_format}
+    controller: ItechWorld\SuluContentAiBundle\Controller\Admin\AiProviderConfigController::putAction
+    methods: PUT
+    defaults: { _format: json }
+    requirements: { _format: json }
+
+iw_sulu_content_ai.delete_provider:
+    path: /iw-ai-providers/{id}.{_format}
+    controller: ItechWorld\SuluContentAiBundle\Controller\Admin\AiProviderConfigController::deleteAction
+    methods: DELETE
+    defaults: { _format: json }
+    requirements: { _format: json }

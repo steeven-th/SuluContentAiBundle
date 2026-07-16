@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<formats xmlns="http://schemas.sulu.io/media/formats"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://schemas.sulu.io/media/formats http://schemas.sulu.io/media/formats-1.1.xsd">
+
+    <!--
+        Internal format used to send a downscaled image to the vision model:
+        768px inset keeps the aspect ratio and is more than enough for description,
+        while drastically cutting token/bandwidth usage vs. the full-size original.
+    -->
+    <format key="iw_ai_analysis" internal="true">
+        <meta>
+            <title lang="en">AI analysis (Content AI)</title>
+            <title lang="fr">Analyse IA (Content AI)</title>
+        </meta>
+        <scale x="768" y="768" mode="inset"/>
+    </format>
+
+</formats>

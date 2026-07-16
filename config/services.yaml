@@ -1,0 +1,56 @@
+# SuluContentAiBundle service definitions.
+#
+# Service IDs follow the "itech_world.sulu_content_ai.*" convention.
+# Services are added incrementally as the bundle grows (AI generator layer
+# in phase 2.1, admin in phase 3.1, etc.). Autowiring/autoconfiguration is
+# enabled so plain PSR-4 classes under src/ become services automatically.
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+
+    # Auto-tag every field mapper (including project-provided custom ones).
+    _instanceof:
+        ItechWorld\SuluContentAiBundle\Schema\FieldMapper\FieldMapperInterface:
+            tags: ['itech_world.sulu_content_ai.field_mapper']
+
+    ItechWorld\SuluContentAiBundle\:
+        resource: '../src/'
+        exclude:
+            - '../src/Entity/'
+            - '../src/ItechWorldSuluContentAiBundle.php'
+
+    # Sulu's metadata provider registry is not autowirable by its class name,
+    # so alias it explicitly (consumed by the block schema generator).
+    Sulu\Bundle\AdminBundle\Metadata\MetadataProviderRegistry: '@sulu_admin.metadata_provider_registry'
+
+    # Admin integration (toolbar button + chat overlay).
+    ItechWorld\SuluContentAiBundle\Admin\ContentAiAdmin:
+        tags:
+            - { name: 'sulu.admin' }
+            - { name: 'sulu.context', context: 'admin' }
+
+    # Admin integration for the experts/prompts CRUD (views + navigation).
+    ItechWorld\SuluContentAiBundle\Admin\AiSettingsAdmin:
+        tags:
+            - { name: 'sulu.admin' }
+            - { name: 'sulu.context', context: 'admin' }
+
+    # REST CRUD controllers (extend Sulu's AbstractRestController, so they need the
+    # controller tag explicitly — not covered by Symfony's AbstractController autoconfig).
+    ItechWorld\SuluContentAiBundle\Controller\Admin\AiExpertController:
+        public: true
+        tags: ['controller.service_arguments']
+
+    ItechWorld\SuluContentAiBundle\Controller\Admin\AiPromptController:
+        public: true
+        tags: ['controller.service_arguments']
+
+    ItechWorld\SuluContentAiBundle\Controller\Admin\AiProviderConfigController:
+        public: true
+        tags: ['controller.service_arguments']
+
+    # The content schema generator receives all registered field mappers.
+    ItechWorld\SuluContentAiBundle\Schema\ContentSchemaGenerator:
+        arguments:
+            $mappers: !tagged_iterator itech_world.sulu_content_ai.field_mapper

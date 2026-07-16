@@ -1,0 +1,46 @@
+/*
+ * Per-field AI button, overlaid in the top-right corner of the input (Sulu.ai
+ * style). Flush to the edge by default (right: 2px). This bundle stays decoupled
+ * from any other bundle that may place a button in the same corner: to shift the
+ * AI button aside, override the `--iw-content-ai-field-button-right` custom
+ * property in your project CSS, e.g.
+ *
+ *   :root { --iw-content-ai-field-button-right: 34px; }
+ *
+ * For text_editor the toolbar pushes the button down (top: 50px).
+ */
+.ai-field-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.ai-field-button {
+    position: absolute;
+    top: 2px;
+    right: var(--iw-content-ai-field-button-right, 2px);
+    z-index: 11;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    border: none;
+    border-radius: 4px;
+    background: #52b6ca;
+    color: #fff;
+    cursor: pointer;
+}
+
+.ai-field-button:hover {
+    background: #3da1b4;
+}
+
+.ai-field-button:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
+.ai-field-wrapper--editor .ai-field-button {
+    top: 50px;
+}

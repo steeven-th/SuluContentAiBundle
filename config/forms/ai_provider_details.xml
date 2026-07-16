@@ -1,0 +1,66 @@
+<?xml version="1.0" ?>
+<form xmlns="http://schemas.sulu.io/template/template"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="http://schemas.sulu.io/template/template http://schemas.sulu.io/template/form-1.0.xsd">
+
+    <key>iw_ai_provider_details</key>
+
+    <properties>
+        <property name="provider" type="single_select" mandatory="true">
+            <meta>
+                <title>iw_sulu_content_ai.provider</title>
+            </meta>
+            <params>
+                <param name="default_value" value="mistral"/>
+                <param name="values" type="collection">
+                    <param name="mistral">
+                        <meta>
+                            <title>Mistral</title>
+                        </meta>
+                    </param>
+                    <param name="openai">
+                        <meta>
+                            <title>OpenAI</title>
+                        </meta>
+                    </param>
+                    <param name="anthropic">
+                        <meta>
+                            <title>Anthropic</title>
+                        </meta>
+                    </param>
+                </param>
+            </params>
+        </property>
+
+        <property name="apiKey" type="text_line">
+            <meta>
+                <title>iw_sulu_content_ai.api_key</title>
+                <info_text>iw_sulu_content_ai.api_key_info</info_text>
+            </meta>
+        </property>
+
+        <property name="model" type="iw_ai_model_select">
+            <meta>
+                <title>iw_sulu_content_ai.model_label</title>
+                <info_text>iw_sulu_content_ai.model_info</info_text>
+            </meta>
+        </property>
+
+        <property name="visionModel" type="iw_ai_model_select">
+            <meta>
+                <title>iw_sulu_content_ai.vision_model_label</title>
+                <info_text>iw_sulu_content_ai.vision_model_info</info_text>
+            </meta>
+        </property>
+
+        <property name="enabled" type="checkbox">
+            <meta>
+                <title>iw_sulu_content_ai.enabled</title>
+                <info_text>iw_sulu_content_ai.enabled_provider_info</info_text>
+            </meta>
+            <params>
+                <param name="default_value" value="true"/>
+            </params>
+        </property>
+    </properties>
+</form>

@@ -1,0 +1,290 @@
+name: ⚙️ Auto Release
+
+on:
+  pull_request:
+    types: [ closed ]
+    branches: [ main ]
+
+  # Manual trigger
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version number (e.g. 1.2.3, 1.2.3-beta, 0.1.6-b)'
+        required: true
+        type: string
+      force:
+        description: 'Force release even if tag exists'
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    if: |
+      (github.event_name == 'pull_request' &&
+       github.event.pull_request.merged == true) ||
+      (github.event_name == 'workflow_dispatch')
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Determine version
+        id: determine_version
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            INPUT_VERSION="${{ github.event.inputs.version }}"
+
+            if ! echo "$INPUT_VERSION" | grep -qP '^v?\d+\.\d+\.\d+(?:-[a-zA-Z0-9\.-]+)?(?:\+[a-zA-Z0-9\.-]+)?$'; then
+              echo "❌ Invalid version format: '$INPUT_VERSION'"
+              echo "💡 Expected: '1.2.3', '1.2.3-beta', '1.2.3-rc.1'"
+              exit 1
+            fi
+
+            VERSION=$(echo "$INPUT_VERSION" | sed 's/^v//')
+            TRIGGER_TYPE="manual"
+
+          else
+            PR_TITLE="${{ github.event.pull_request.title }}"
+            VERSION=$(echo "$PR_TITLE" | grep -oP 'v?\d+\.\d+\.\d+(?:-[a-zA-Z0-9\.-]+)?(?:\+[a-zA-Z0-9\.-]+)?')
+
+            if [ -z "$VERSION" ]; then
+              echo "❌ No valid version found in: '$PR_TITLE'"
+              echo "💡 Format: 'Release v1.2.3' or 'feat: new feature v1.2.3'"
+              exit 1
+            fi
+
+            VERSION=$(echo "$VERSION" | sed 's/^v//')
+            TRIGGER_TYPE="pr"
+          fi
+
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "TAG_VERSION=v$VERSION" >> $GITHUB_ENV
+          echo "TRIGGER_TYPE=$TRIGGER_TYPE" >> $GITHUB_ENV
+          echo "✅ Version: $VERSION (triggered by: $TRIGGER_TYPE)"
+
+      - name: Check if version already exists
+        run: |
+          if git tag | grep -q "^v${{ env.VERSION }}$"; then
+            if [ "${{ github.event.inputs.force }}" == "true" ]; then
+              echo "⚠️ Tag v${{ env.VERSION }} exists but force=true, continuing..."
+              echo "🗑️ Deleting existing tag..."
+              git tag -d "v${{ env.VERSION }}" || true
+              git push --delete origin "v${{ env.VERSION }}" || true
+            else
+              echo "❌ Tag v${{ env.VERSION }} already exists!"
+              echo "💡 Use 'force=true' to override or choose a different version"
+              exit 1
+            fi
+          else
+            echo "✅ Version v${{ env.VERSION }} is available"
+          fi
+
+      - name: Validate branch for manual trigger
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          CURRENT_BRANCH=$(git branch --show-current)
+          if [ "$CURRENT_BRANCH" != "main" ]; then
+            echo "⚠️ Manual release triggered from '$CURRENT_BRANCH' instead of 'main'"
+            echo "🔄 Switching to main branch..."
+            git checkout main
+            git pull origin main
+          fi
+
+      - name: Generate release notes from conventional commits
+        run: |
+          # Find the previous tag to diff against
+          PREV_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          TODAY=$(date +%Y-%m-%d)
+
+          echo "📝 Generating release notes (previous tag: ${PREV_TAG:-none})..."
+
+          # Generate the changelog entry for this release
+          RELEASE_NOTES=""
+          FEATURES=""
+          FIXES=""
+          DOCS=""
+          CHORES=""
+          BREAKING=""
+
+          if [ -n "$PREV_TAG" ]; then
+            RANGE="${PREV_TAG}..HEAD"
+          else
+            RANGE="HEAD"
+          fi
+
+          while IFS= read -r line; do
+            HASH=$(echo "$line" | cut -d' ' -f1)
+            MSG=$(echo "$line" | cut -d' ' -f2-)
+            SHORT_HASH="${HASH:0:7}"
+            LINK="[${SHORT_HASH}](https://github.com/${{ github.repository }}/commit/${HASH})"
+
+            # Skip merge commits and changelog commits
+            echo "$MSG" | grep -qE '^(Merge |chore\(release\))' && continue
+
+            # Categorize by conventional commit prefix
+            if echo "$MSG" | grep -qE '^feat(\(.*\))?!:'; then
+              BODY=$(echo "$MSG" | sed 's/^feat\(.*\)!: //' | sed 's/^feat!: //')
+              FEATURES="${FEATURES}\n- ${BODY} (${LINK})"
+              BREAKING="${BREAKING}\n- ${BODY}"
+            elif echo "$MSG" | grep -qE '^feat(\(.*\))?:'; then
+              BODY=$(echo "$MSG" | sed 's/^feat\(.*\): //' | sed 's/^feat: //')
+              FEATURES="${FEATURES}\n- ${BODY} (${LINK})"
+            elif echo "$MSG" | grep -qE '^fix(\(.*\))?:'; then
+              BODY=$(echo "$MSG" | sed 's/^fix\(.*\): //' | sed 's/^fix: //')
+              FIXES="${FIXES}\n- ${BODY} (${LINK})"
+            elif echo "$MSG" | grep -qE '^docs(\(.*\))?:'; then
+              BODY=$(echo "$MSG" | sed 's/^docs\(.*\): //' | sed 's/^docs: //')
+              DOCS="${DOCS}\n- ${BODY} (${LINK})"
+            elif echo "$MSG" | grep -qE '^(chore|refactor|perf|style|test|ci|build)(\(.*\))?:'; then
+              BODY=$(echo "$MSG" | sed 's/^[a-z]*\(.*\): //' | sed 's/^[a-z]*: //')
+              CHORES="${CHORES}\n- ${BODY} (${LINK})"
+            else
+              # Non-conventional commits go to chores
+              CHORES="${CHORES}\n- ${MSG} (${LINK})"
+            fi
+          done < <(git log ${RANGE} --pretty=tformat:"%H %s" --no-merges)
+
+          # Build the changelog entry
+          ENTRY="## [${VERSION}] - ${TODAY}\n"
+
+          if [ -n "$FEATURES" ]; then
+            ENTRY="${ENTRY}\n### Added\n${FEATURES}\n"
+          fi
+          if [ -n "$FIXES" ]; then
+            ENTRY="${ENTRY}\n### Fixed\n${FIXES}\n"
+          fi
+          if [ -n "$DOCS" ]; then
+            ENTRY="${ENTRY}\n### Documentation\n${DOCS}\n"
+          fi
+          if [ -n "$CHORES" ]; then
+            ENTRY="${ENTRY}\n### Changed\n${CHORES}\n"
+          fi
+          if [ -n "$BREAKING" ]; then
+            ENTRY="${ENTRY}\n### BREAKING CHANGES\n${BREAKING}\n"
+          fi
+
+          # Build release notes for GitHub (same content, markdown-friendly)
+          echo -e "$ENTRY" > latest-changelog.md
+
+          if [ "${{ env.TRIGGER_TYPE }}" == "manual" ]; then
+            echo "" >> latest-changelog.md
+            echo "---" >> latest-changelog.md
+            echo "" >> latest-changelog.md
+            echo "🚀 **Manual release triggered by @${{ github.actor }}**" >> latest-changelog.md
+          fi
+
+          # Insert the entry into CHANGELOG.md (after the header lines)
+          if [ -f CHANGELOG.md ]; then
+            # Find the line with the first ## entry and insert before it
+            FIRST_ENTRY_LINE=$(grep -n '^## \[' CHANGELOG.md | head -1 | cut -d: -f1)
+            if [ -n "$FIRST_ENTRY_LINE" ]; then
+              {
+                head -n $((FIRST_ENTRY_LINE - 1)) CHANGELOG.md
+                echo ""
+                echo -e "$ENTRY"
+                tail -n +${FIRST_ENTRY_LINE} CHANGELOG.md
+              } > CHANGELOG.tmp && mv CHANGELOG.tmp CHANGELOG.md
+            else
+              echo -e "\n${ENTRY}" >> CHANGELOG.md
+            fi
+          else
+            echo "# Changelog" > CHANGELOG.md
+            echo "" >> CHANGELOG.md
+            echo "All notable changes to this project will be documented in this file." >> CHANGELOG.md
+            echo "" >> CHANGELOG.md
+            echo -e "$ENTRY" >> CHANGELOG.md
+          fi
+
+          # Add the version comparison link at the bottom
+          if [ -n "$PREV_TAG" ]; then
+            COMPARE_LINK="[${VERSION}]: https://github.com/${{ github.repository }}/compare/${PREV_TAG}...v${VERSION}"
+          else
+            COMPARE_LINK="[${VERSION}]: https://github.com/${{ github.repository }}/releases/tag/v${VERSION}"
+          fi
+
+          # Insert link before existing links or append
+          if grep -q '^\[.*\]: https://github.com' CHANGELOG.md; then
+            FIRST_LINK_LINE=$(grep -n '^\[.*\]: https://github.com' CHANGELOG.md | head -1 | cut -d: -f1)
+            sed -i "${FIRST_LINK_LINE}i\\${COMPARE_LINK}" CHANGELOG.md
+          else
+            echo "" >> CHANGELOG.md
+            echo "$COMPARE_LINK" >> CHANGELOG.md
+          fi
+
+          echo "✅ Changelog and release notes generated"
+          echo "--- Release notes preview ---"
+          cat latest-changelog.md
+
+      - name: Commit and push changes
+        run: |
+          git config --local user.name "github-actions[bot]"
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+
+          if git diff --quiet CHANGELOG.md; then
+            echo "📝 No changelog changes to commit"
+          else
+            git add CHANGELOG.md
+
+            if [ "${{ env.TRIGGER_TYPE }}" == "manual" ]; then
+              COMMIT_MSG="chore(release): update changelog for v${{ env.VERSION }} [manual release]"
+            else
+              COMMIT_MSG="chore(release): update changelog for v${{ env.VERSION }}"
+            fi
+
+            git commit -m "$COMMIT_MSG"
+            git push origin main
+            echo "✅ Changelog committed and pushed"
+          fi
+
+      - name: Create and push tag
+        run: |
+          if [ "${{ env.TRIGGER_TYPE }}" == "manual" ]; then
+            TAG_MSG="Release version ${{ env.VERSION }} (manual release by ${{ github.actor }})"
+          else
+            TAG_MSG="Release version ${{ env.VERSION }}"
+          fi
+
+          git tag -a "${{ env.TAG_VERSION }}" -m "$TAG_MSG"
+          git push origin "${{ env.TAG_VERSION }}"
+          echo "🏷️ Tag ${{ env.TAG_VERSION }} created and pushed"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.TAG_VERSION }}
+          name: "Release ${{ env.TAG_VERSION }}"
+          body_path: latest-changelog.md
+          draft: false
+          prerelease: ${{ contains(env.VERSION, '-') }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Merge main into dev
+        run: |
+          if git show-ref --verify --quiet refs/remotes/origin/dev; then
+            echo "🔄 Synchronizing dev branch..."
+            git fetch origin dev
+            git checkout dev
+            git merge main --no-ff -m "chore: sync dev with main after release ${{ env.TAG_VERSION }}"
+            git push origin dev
+            echo "✅ Dev branch synchronized"
+          else
+            echo "ℹ️ No dev branch found, skipping sync"
+          fi
+
+      - name: Release summary
+        run: |
+          echo "🎉 **Release Summary**"
+          echo "✅ Version: ${{ env.TAG_VERSION }}"
+          echo "✅ Trigger: ${{ env.TRIGGER_TYPE }}"
+          echo "✅ Actor: ${{ github.actor }}"
+          echo "✅ Packagist will auto-update within 5-10 minutes"
+          echo ""
+          echo "🔗 **Links:**"
+          echo "- Release: https://github.com/${{ github.repository }}/releases/tag/${{ env.TAG_VERSION }}"
+          echo "- Packagist: https://packagist.org/packages/itech-world/sulu-content-ai-bundle"

@@ -1,0 +1,10 @@
+# Composer
+/vendor/
+/composer.lock
+
+# Tooling caches
+/.php-cs-fixer.cache
+/.phpunit.result.cache
+
+# OS
+.DS_Store

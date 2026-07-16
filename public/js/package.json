@@ -1,0 +1,11 @@
+{
+    "name": "sulu-itech-world-sulu-content-ai-bundle",
+    "version": "0.1.0",
+    "description": "Admin UI for SuluContentAiBundle (AI assistant panel)",
+    "private": true,
+    "main": "index.js",
+    "peerDependencies": {
+        "react": "*",
+        "sulu-admin-bundle": "*"
+    }
+}
