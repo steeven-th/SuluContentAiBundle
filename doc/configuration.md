@@ -99,6 +99,11 @@ import 'sulu-itech-world-sulu-content-ai-bundle';
 import './custom.css';
 ```
 
+> The `sulu-itech-world-sulu-content-ai-bundle` import only resolves if the bundle
+> is declared in `assets/admin/package.json`:
+> `"sulu-itech-world-sulu-content-ai-bundle": "file:../../vendor/itech-world/sulu-content-ai-bundle/public/js"`
+> — see step 5 of the installation in the [README](../README.md).
+
 **3.** Rebuild the admin assets (`npm run build` in `assets/admin/`). Sulu's
 webpack config already handles `.css` imports through `css-loader`, so nothing
 else is required.

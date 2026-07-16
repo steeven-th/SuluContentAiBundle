@@ -105,12 +105,29 @@ MISTRAL_API_KEY=your-key-here
 
 ### 5. Register the admin assets
 
+Edit `assets/admin/package.json` to add the bundle to the dependencies:
+
+```json
+{
+    "dependencies": {
+        // ...
+        "sulu-itech-world-sulu-content-ai-bundle": "file:../../vendor/itech-world/sulu-content-ai-bundle/public/js"
+    }
+}
+```
+
+Edit `assets/admin/app.js` to import the bundle:
+
 ```js
-// assets/admin/app.js
 import 'sulu-itech-world-sulu-content-ai-bundle';
 ```
 
-Then rebuild the admin assets (`npm run build` in `assets/admin/`).
+In the `assets/admin/` folder, install and rebuild the admin assets:
+
+```bash
+npm install
+npm run build
+```
 
 ### 6. Update the database schema
 
