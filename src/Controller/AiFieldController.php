@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace ItechWorld\SuluContentAiBundle\Controller;
 
+use ItechWorld\SuluContentAiBundle\Admin\ContentAiAdmin;
 use ItechWorld\SuluContentAiBundle\Ai\FieldAssistant;
 use ItechWorld\SuluContentAiBundle\Entity\AiExpert;
 use ItechWorld\SuluContentAiBundle\Entity\AiPrompt;
 use ItechWorld\SuluContentAiBundle\Repository\AiExpertRepository;
 use ItechWorld\SuluContentAiBundle\Repository\AiPromptRepository;
+use Sulu\Component\Security\Authorization\PermissionTypes;
+use Sulu\Component\Security\Authorization\SecurityCheckerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -27,6 +30,7 @@ final class AiFieldController extends AbstractController
         private readonly FieldAssistant $fieldAssistant,
         private readonly AiExpertRepository $expertRepository,
         private readonly AiPromptRepository $promptRepository,
+        private readonly SecurityCheckerInterface $securityChecker,
     ) {
     }
 
@@ -36,6 +40,9 @@ final class AiFieldController extends AbstractController
     #[Route('/options', name: 'options', methods: ['GET'])]
     public function options(): JsonResponse
     {
+        // Listing options only needs the assistant VIEW permission.
+        $this->securityChecker->checkPermission(ContentAiAdmin::SECURITY_CONTEXT, PermissionTypes::VIEW);
+
         $experts = array_map(
             static fn (AiExpert $expert): array => ['id' => $expert->getId(), 'name' => $expert->getName()],
             $this->expertRepository->findEnabled(),
@@ -55,6 +62,9 @@ final class AiFieldController extends AbstractController
     #[Route('/transform', name: 'transform', methods: ['POST'])]
     public function transform(Request $request): JsonResponse
     {
+        // Transforming a field's value is an AI edit: require the assistant EDIT permission.
+        $this->securityChecker->checkPermission(ContentAiAdmin::SECURITY_CONTEXT, PermissionTypes::EDIT);
+
         /** @var array<string, mixed> $data */
         $data = json_decode($request->getContent(), true) ?? [];
 

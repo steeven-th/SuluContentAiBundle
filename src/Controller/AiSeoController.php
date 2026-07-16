@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace ItechWorld\SuluContentAiBundle\Controller;
 
+use ItechWorld\SuluContentAiBundle\Admin\ContentAiAdmin;
 use ItechWorld\SuluContentAiBundle\Ai\SeoGenerator;
+use Sulu\Component\Security\Authorization\PermissionTypes;
+use Sulu\Component\Security\Authorization\SecurityCheckerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -23,6 +26,7 @@ final class AiSeoController extends AbstractController
 {
     public function __construct(
         private readonly SeoGenerator $seoGenerator,
+        private readonly SecurityCheckerInterface $securityChecker,
     ) {
     }
 
@@ -32,6 +36,9 @@ final class AiSeoController extends AbstractController
     #[Route('/seo', name: 'seo', methods: ['POST'])]
     public function generate(Request $request): JsonResponse
     {
+        // Applying AI-generated SEO mutates the document: require the assistant EDIT permission.
+        $this->securityChecker->checkPermission(ContentAiAdmin::SECURITY_CONTEXT, PermissionTypes::EDIT);
+
         /** @var array<string, mixed> $data */
         $data = json_decode($request->getContent(), true) ?? [];
 

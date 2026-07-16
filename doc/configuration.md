@@ -44,8 +44,8 @@ ai:
 
     agent:
         content_ai:
-            platform: 'ai.platform.openai'
-            model: 'gpt-4o-mini'
+            platform: 'ai.platform.mistral'
+            model: 'mistral-small-latest'
             prompt: |
                 You are a content assistant integrated into the Sulu CMS admin.
                 You help editors write and structure page and article content.
@@ -62,7 +62,7 @@ The bundle exposes a minimal configuration under the `itech_world_sulu_content_a
 ```yaml
 # config/packages/itech_world_sulu_content_ai.yaml
 itech_world_sulu_content_ai:
-    default_provider: openai        # openai | anthropic | mistral
+    default_provider: mistral       # openai | anthropic | mistral
     model: 'mistral-small-latest'   # model for content/SEO/translation (needs json_schema support)
     vision_model: 'pixtral-12b-latest' # vision-capable model for image metadata (needs image input)
 ```
@@ -99,9 +99,31 @@ import 'sulu-itech-world-sulu-content-ai-bundle';
 import './custom.css';
 ```
 
+> The `sulu-itech-world-sulu-content-ai-bundle` import only resolves if the bundle
+> is declared in `assets/admin/package.json`:
+> `"sulu-itech-world-sulu-content-ai-bundle": "file:../../vendor/itech-world/sulu-content-ai-bundle/public/js"`
+> — see step 5 of the installation in the [README](../README.md).
+
 **3.** Rebuild the admin assets (`npm run build` in `assets/admin/`). Sulu's
 webpack config already handles `.css` imports through `css-loader`, so nothing
 else is required.
 
 > The same approach lets you override any other admin CSS custom property exposed
 > by this or other bundles.
+
+## 6. Permissions
+
+The bundle registers an **"AI Assistant"** security context
+(`sulu.iw_sulu_content_ai.assistant`) with `view` and `edit` permissions. Grant it
+per role under **Settings → User roles**.
+
+The AI actions on pages, articles and media are gated by this context:
+
+- **`edit`** — required to run the assistant (chat), generate SEO tags, generate or
+  translate media metadata, and use the per-field writing assistant. Without it the
+  toolbar/field buttons are hidden **and** the API endpoints return `403`.
+- **`view`** — required for the read-only endpoints (conversation history, expert/prompt
+  option lists).
+
+Both the admin UI (button visibility) and the back-office controllers enforce the
+check, so removing the permission fully disables the feature for that role.

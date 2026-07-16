@@ -4,12 +4,15 @@ declare(strict_types=1);
 
 namespace ItechWorld\SuluContentAiBundle\Controller;
 
+use ItechWorld\SuluContentAiBundle\Admin\ContentAiAdmin;
 use ItechWorld\SuluContentAiBundle\Ai\AiGeneratorInterface;
 use ItechWorld\SuluContentAiBundle\Ai\ContentGenerator;
 use ItechWorld\SuluContentAiBundle\Conversation\ConversationManagerInterface;
 use ItechWorld\SuluContentAiBundle\Entity\AiConversation;
 use ItechWorld\SuluContentAiBundle\Entity\AiMessageRole;
 use Psr\Log\LoggerInterface;
+use Sulu\Component\Security\Authorization\PermissionTypes;
+use Sulu\Component\Security\Authorization\SecurityCheckerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -31,6 +34,7 @@ final class AiChatController extends AbstractController
         private readonly AiGeneratorInterface $aiGenerator,
         private readonly ContentGenerator $contentGenerator,
         private readonly LoggerInterface $logger,
+        private readonly SecurityCheckerInterface $securityChecker,
     ) {
     }
 
@@ -40,6 +44,9 @@ final class AiChatController extends AbstractController
     #[Route('/history', name: 'history', methods: ['GET'])]
     public function history(Request $request): JsonResponse
     {
+        // Reading the conversation only needs the assistant VIEW permission.
+        $this->securityChecker->checkPermission(ContentAiAdmin::SECURITY_CONTEXT, PermissionTypes::VIEW);
+
         $resourceKey = (string) $request->query->get('resourceKey', '');
         $id = (string) $request->query->get('id', '');
         $locale = (string) $request->query->get('locale', '');
@@ -59,6 +66,9 @@ final class AiChatController extends AbstractController
     #[Route('/chat', name: 'chat', methods: ['POST'])]
     public function chat(Request $request): JsonResponse
     {
+        // The assistant produces content to apply: require the assistant EDIT permission.
+        $this->securityChecker->checkPermission(ContentAiAdmin::SECURITY_CONTEXT, PermissionTypes::EDIT);
+
         /** @var array<string, mixed> $data */
         $data = json_decode($request->getContent(), true) ?? [];
 
@@ -142,6 +152,9 @@ final class AiChatController extends AbstractController
     #[Route('/clear', name: 'clear', methods: ['POST'])]
     public function clear(Request $request): JsonResponse
     {
+        // Clearing the conversation mutates stored state: require the assistant EDIT permission.
+        $this->securityChecker->checkPermission(ContentAiAdmin::SECURITY_CONTEXT, PermissionTypes::EDIT);
+
         /** @var array<string, mixed> $data */
         $data = json_decode($request->getContent(), true) ?? [];
 

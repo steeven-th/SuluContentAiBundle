@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace ItechWorld\SuluContentAiBundle\Controller;
 
+use ItechWorld\SuluContentAiBundle\Admin\ContentAiAdmin;
 use ItechWorld\SuluContentAiBundle\Ai\FieldTranslator;
 use ItechWorld\SuluContentAiBundle\Ai\MediaMetadataGenerator;
 use Sulu\Bundle\MediaBundle\Media\ImageConverter\ImageConverterInterface;
 use Sulu\Bundle\MediaBundle\Media\Manager\MediaManagerInterface;
 use Sulu\Bundle\MediaBundle\Media\Storage\StorageInterface;
+use Sulu\Component\Security\Authorization\PermissionTypes;
+use Sulu\Component\Security\Authorization\SecurityCheckerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -38,6 +41,7 @@ final class AiMediaController extends AbstractController
         private readonly StorageInterface $storage,
         #[Autowire(service: 'sulu_media.image.converter')]
         private readonly ImageConverterInterface $imageConverter,
+        private readonly SecurityCheckerInterface $securityChecker,
     ) {
     }
 
@@ -47,6 +51,9 @@ final class AiMediaController extends AbstractController
     #[Route('/translate-metadata', name: 'translate', methods: ['POST'])]
     public function translateMetadata(Request $request): JsonResponse
     {
+        // Applying translated metadata mutates the media: require the assistant EDIT permission.
+        $this->securityChecker->checkPermission(ContentAiAdmin::SECURITY_CONTEXT, PermissionTypes::EDIT);
+
         /** @var array<string, mixed> $data */
         $data = json_decode($request->getContent(), true) ?? [];
 
@@ -93,6 +100,9 @@ final class AiMediaController extends AbstractController
     #[Route('/generate-metadata', name: 'generate', methods: ['POST'])]
     public function generateMetadata(Request $request): JsonResponse
     {
+        // Applying vision-generated metadata mutates the media: require the assistant EDIT permission.
+        $this->securityChecker->checkPermission(ContentAiAdmin::SECURITY_CONTEXT, PermissionTypes::EDIT);
+
         /** @var array<string, mixed> $data */
         $data = json_decode($request->getContent(), true) ?? [];
 
